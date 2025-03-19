@@ -10,18 +10,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.Link;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
 @RestController
-@RequestMapping("api/v1/productos")
+@RequestMapping("api/productos")
 @RequiredArgsConstructor
 @Tag(name = "Producto", description = "API para la gestión de Productos")
 public class ProductoController {
@@ -40,28 +36,12 @@ public class ProductoController {
                     content = @Content(schema = @Schema(implementation = List.class)))
     })
     @GetMapping
-    public ResponseEntity<CollectionModel<ProductoEntity>> listarProductos() {
+    public ResponseEntity<List<ProductoEntity>> listarProductos() {
         try {
             List<ProductoEntity> productos = productoService.listarProductos();
-
-            // Agregar enlaces a cada producto
-            for (ProductoEntity producto : productos) {
-                agregarEnlacesProducto(producto);
-            }
-
-            // Crear CollectionModel con enlaces de colección
-            CollectionModel<ProductoEntity> productosModel = CollectionModel.of(productos);
-
-            // Agregar enlaces de colección
-            Link selfLink = linkTo(methodOn(ProductoController.class).listarProductos()).withSelfRel();
-            Link activosLink = linkTo(methodOn(ProductoController.class).listarProductosActivos()).withRel("activos");
-            Link conStockLink = linkTo(methodOn(ProductoController.class).listarProductosConStock(1)).withRel("con-stock");
-
-            productosModel.add(selfLink, activosLink, conStockLink);
-
-            return ResponseEntity.ok(productosModel);
+            return ResponseEntity.ok(productos);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(CollectionModel.empty());
+            return ResponseEntity.status(500).body(null);
         }
     }
 
@@ -85,7 +65,6 @@ public class ProductoController {
             @PathVariable Integer id) {
         try {
             ProductoEntity producto = productoService.buscarProductoPorId(id);
-            agregarEnlacesProducto(producto);
             return ResponseEntity.ok(producto);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
@@ -115,9 +94,8 @@ public class ProductoController {
             @RequestBody ProductoEntity productoEntity) {
         try {
             ProductoEntity nuevoProducto = productoService.guardarProducto(productoEntity);
-            agregarEnlacesProducto(nuevoProducto);
             return ResponseEntity.created(
-                            linkTo(methodOn(ProductoController.class).productoPorId(nuevoProducto.getId())).toUri())
+                            URI.create("/api/productos/" + nuevoProducto.getId()))
                     .body(nuevoProducto);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
@@ -150,7 +128,6 @@ public class ProductoController {
         try {
             productoEntity.setId(id);
             ProductoEntity productoActualizado = productoService.guardarProducto(productoEntity);
-            agregarEnlacesProducto(productoActualizado);
             return ResponseEntity.ok(productoActualizado);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
@@ -179,7 +156,6 @@ public class ProductoController {
             @PathVariable Integer id) {
         try {
             ProductoEntity producto = productoService.eliminarProducto(id);
-            // No añadimos enlaces a un producto eliminado
             return ResponseEntity.ok(producto);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
@@ -208,7 +184,6 @@ public class ProductoController {
             @PathVariable String codigo) {
         try {
             ProductoEntity producto = productoService.buscarProductoPorCodigo(codigo);
-            agregarEnlacesProducto(producto);
             return ResponseEntity.ok(producto);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
@@ -232,28 +207,16 @@ public class ProductoController {
                     content = @Content)
     })
     @GetMapping("/search")
-    public ResponseEntity<CollectionModel<ProductoEntity>> buscarPorNombre(
+    public ResponseEntity<List<ProductoEntity>> buscarPorNombre(
             @Parameter(description = "Término a buscar en el nombre del producto", required = true, example = "Samsung")
             @RequestParam String nombre) {
         try {
             List<ProductoEntity> productos = productoService.buscarProductosPorNombre(nombre);
-
-            // Agregar enlaces a cada producto
-            for (ProductoEntity producto : productos) {
-                agregarEnlacesProducto(producto);
-            }
-
-            CollectionModel<ProductoEntity> productosModel = CollectionModel.of(productos);
-            Link selfLink = linkTo(methodOn(ProductoController.class).buscarPorNombre(nombre)).withSelfRel();
-            Link allLink = linkTo(methodOn(ProductoController.class).listarProductos()).withRel("todos");
-
-            productosModel.add(selfLink, allLink);
-
-            return ResponseEntity.ok(productosModel);
+            return ResponseEntity.ok(productos);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(CollectionModel.empty());
+            return ResponseEntity.status(500).body(null);
         }
     }
 
@@ -272,28 +235,16 @@ public class ProductoController {
                     content = @Content)
     })
     @GetMapping("/by-categoria/{categoria}")
-    public ResponseEntity<CollectionModel<ProductoEntity>> listarPorCategoria(
+    public ResponseEntity<List<ProductoEntity>> listarPorCategoria(
             @Parameter(description = "Categoría de productos", required = true, example = "Electrónica")
             @PathVariable String categoria) {
         try {
             List<ProductoEntity> productos = productoService.buscarProductosPorCategoria(categoria);
-
-            // Agregar enlaces a cada producto
-            for (ProductoEntity producto : productos) {
-                agregarEnlacesProducto(producto);
-            }
-
-            CollectionModel<ProductoEntity> productosModel = CollectionModel.of(productos);
-            Link selfLink = linkTo(methodOn(ProductoController.class).listarPorCategoria(categoria)).withSelfRel();
-            Link allLink = linkTo(methodOn(ProductoController.class).listarProductos()).withRel("todos");
-
-            productosModel.add(selfLink, allLink);
-
-            return ResponseEntity.ok(productosModel);
+            return ResponseEntity.ok(productos);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(CollectionModel.empty());
+            return ResponseEntity.status(500).body(null);
         }
     }
 
@@ -309,24 +260,12 @@ public class ProductoController {
                     content = @Content)
     })
     @GetMapping("/activos")
-    public ResponseEntity<CollectionModel<ProductoEntity>> listarProductosActivos() {
+    public ResponseEntity<List<ProductoEntity>> listarProductosActivos() {
         try {
             List<ProductoEntity> productos = productoService.listarProductosActivos();
-
-            // Agregar enlaces a cada producto
-            for (ProductoEntity producto : productos) {
-                agregarEnlacesProducto(producto);
-            }
-
-            CollectionModel<ProductoEntity> productosModel = CollectionModel.of(productos);
-            Link selfLink = linkTo(methodOn(ProductoController.class).listarProductosActivos()).withSelfRel();
-            Link allLink = linkTo(methodOn(ProductoController.class).listarProductos()).withRel("todos");
-
-            productosModel.add(selfLink, allLink);
-
-            return ResponseEntity.ok(productosModel);
+            return ResponseEntity.ok(productos);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(CollectionModel.empty());
+            return ResponseEntity.status(500).body(null);
         }
     }
 
@@ -342,43 +281,14 @@ public class ProductoController {
                     content = @Content)
     })
     @GetMapping("/with-stock")
-    public ResponseEntity<CollectionModel<ProductoEntity>> listarProductosConStock(
+    public ResponseEntity<List<ProductoEntity>> listarProductosConStock(
             @Parameter(description = "Stock mínimo requerido", example = "10")
             @RequestParam(defaultValue = "0") Integer stockMinimo) {
         try {
             List<ProductoEntity> productos = productoService.listarProductosConStock(stockMinimo);
-
-            // Agregar enlaces a cada producto
-            for (ProductoEntity producto : productos) {
-                agregarEnlacesProducto(producto);
-            }
-
-            CollectionModel<ProductoEntity> productosModel = CollectionModel.of(productos);
-            Link selfLink = linkTo(methodOn(ProductoController.class).listarProductosConStock(stockMinimo)).withSelfRel();
-            Link allLink = linkTo(methodOn(ProductoController.class).listarProductos()).withRel("todos");
-
-            productosModel.add(selfLink, allLink);
-
-            return ResponseEntity.ok(productosModel);
+            return ResponseEntity.ok(productos);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(CollectionModel.empty());
+            return ResponseEntity.status(500).body(null);
         }
-    }
-
-    // Método helper para agregar enlaces HATEOAS a un producto
-    private void agregarEnlacesProducto(ProductoEntity producto) {
-        // Enlace self - a él mismo
-        producto.add(linkTo(methodOn(ProductoController.class).productoPorId(producto.getId())).withSelfRel());
-
-        // Enlaces a acciones relacionadas
-        producto.add(linkTo(methodOn(ProductoController.class).actualizarProducto(producto.getId(), producto)).withRel("actualizar"));
-        producto.add(linkTo(methodOn(ProductoController.class).eliminarProducto(producto.getId())).withRel("eliminar"));
-        producto.add(linkTo(methodOn(ProductoController.class).buscarPorCodigo(producto.getCodigo())).withRel("por-codigo"));
-
-        // Enlace a productos de la misma categoría
-        producto.add(linkTo(methodOn(ProductoController.class).listarPorCategoria(producto.getCategoria())).withRel("misma-categoria"));
-
-        // Enlace a todos los productos
-        producto.add(linkTo(methodOn(ProductoController.class).listarProductos()).withRel("todos"));
     }
 }

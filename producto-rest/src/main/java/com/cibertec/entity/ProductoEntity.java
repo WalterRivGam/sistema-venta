@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Data
 @Schema(name = "Producto", description = "Entidad que representa un producto en el sistema")
-public class ProductoEntity extends RepresentationModel<ProductoEntity> {
+public class ProductoEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
