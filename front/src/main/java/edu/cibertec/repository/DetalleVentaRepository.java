@@ -5,6 +5,7 @@ import edu.cibertec.dto.DetalleVentaDTO;
 
 public interface DetalleVentaRepository {
     public List<DetalleVentaDTO> listarDetallesVenta();
+    public List<DetalleVentaDTO> listarDetallesVenta(Integer idVenta);
     public DetalleVentaDTO obtenerDetalleVenta(Integer idDetalleVenta);
     public DetalleVentaDTO registrarDetalleVenta(DetalleVentaDTO detalleVenta);
     public void actualizarDetalleVenta(DetalleVentaDTO detalleVenta);

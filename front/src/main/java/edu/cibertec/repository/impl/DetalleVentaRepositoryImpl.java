@@ -44,4 +44,9 @@ public class DetalleVentaRepositoryImpl implements DetalleVentaRepository {
     public void eliminarDetalleVenta(Integer idDetalleVenta) {
         restTemplate.delete(urlApi + "/detalles-venta/" + idDetalleVenta);
     }
+
+    @Override
+    public List<DetalleVentaDTO> listarDetallesVenta(Integer idVenta) {
+        return restTemplate.getForObject(urlApi + "/detalles-venta/" + idVenta, List.class);
+    }
 }

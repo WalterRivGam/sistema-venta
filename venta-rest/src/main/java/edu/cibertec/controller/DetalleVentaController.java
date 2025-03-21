@@ -44,6 +44,21 @@ public class DetalleVentaController {
     }
   }
 
+  @GetMapping("/{idVenta}")
+  @Operation(summary = "Listar detalles de venta de una venta", description = "Listar Detalles de Venta de una venta")
+  public ResponseEntity<List<DetalleVentaEntity>> listarDetallesVenta(@PathVariable Integer idVenta) {
+    try {
+      List<DetalleVentaEntity> listaDetallesVenta = detalleVentaService.listarDetallesVenta(idVenta);
+      listaDetallesVenta.forEach(detalle -> 
+        detalle.add(linkTo(methodOn(DetalleVentaController.class).obtenerDetalleVenta(detalle.getId()))
+        .withRel("Ver detalle de venta " + detalle.getId()))
+      );
+      return ResponseEntity.ok(listaDetallesVenta);
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+  }
+
   @GetMapping("/{idDetalleVenta}")
   @Operation(summary = "Buscar Detalle de Venta por ID", description = "Buscar Detalle de Venta por ID")
   public ResponseEntity<DetalleVentaEntity> obtenerDetalleVenta(@PathVariable Integer idDetalleVenta) {

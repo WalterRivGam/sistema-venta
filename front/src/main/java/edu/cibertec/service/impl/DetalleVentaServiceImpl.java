@@ -39,4 +39,9 @@ public class DetalleVentaServiceImpl implements DetalleVentaService {
     public void eliminarDetalleVenta(Integer idDetalleVenta) {
         detalleVentaRepository.eliminarDetalleVenta(idDetalleVenta);
     }
+
+    @Override
+    public List<DetalleVentaDTO> listarDetallesVenta(Integer idVenta) {
+        return detalleVentaRepository.listarDetallesVenta(idVenta);
+    }
 }

@@ -19,6 +19,10 @@ public class DetalleVentaServiceImpl implements DetalleVentaService {
     public List<DetalleVentaEntity> listarDetallesVenta() {
         return detalleVentaRepository.findAll();
     }
+    @Override
+    public List<DetalleVentaEntity> listarDetallesVenta(Integer idVenta) {
+        return detalleVentaRepository.findAll();
+    }
 
     @Override
     public DetalleVentaEntity obtenerDetalleVenta(Integer idDetalleVenta) {

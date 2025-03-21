@@ -1,10 +1,14 @@
 package edu.cibertec.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import edu.cibertec.dto.DetalleVentaDTO;
 import edu.cibertec.dto.VentaDTO;
+import edu.cibertec.service.DetalleVentaService;
 import edu.cibertec.service.VentaService;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -14,6 +18,9 @@ public class VentaController {
 
     @Autowired
     private VentaService ventaService;
+
+    @Autowired
+    private DetalleVentaService detalleVentaService;
 
     @GetMapping("/venta")
     public ModelAndView venta() {
@@ -56,5 +63,13 @@ public class VentaController {
     public ModelAndView eliminarVenta(@PathVariable("id") Integer idVenta) {
         ventaService.eliminarVenta(idVenta);
         return new ModelAndView("redirect:/sistemaventa/venta");
+    }
+
+    @GetMapping("/venta/detalle/{id}")
+    public ModelAndView detalleVenta(@PathVariable("id") Integer idVenta) {
+        List<DetalleVentaDTO> detallesVenta = detalleVentaService.listarDetallesVenta(idVenta);
+        ModelAndView modelAndView = new ModelAndView("");
+        modelAndView.addObject("listaDetallesVenta", detallesVenta);
+        return modelAndView;
     }
 }
