@@ -1,27 +1,21 @@
 package com.cibertec.service;
 
-import com.cibertec.entity.ProductoEntity;
-
+import com.cibertec.dto.ProductoDTO;
 import java.util.List;
 
 public interface ProductoService {
-    // Métodos CRUD básicos
-    List<ProductoEntity> listarProductos();
 
-    ProductoEntity buscarProductoPorId(Integer id) throws IllegalArgumentException;
+    List<ProductoDTO> listarProductos();
 
-    ProductoEntity guardarProducto(ProductoEntity productoEntity) throws IllegalArgumentException;
+    ProductoDTO buscarProductoPorId(Integer id);
 
-    ProductoEntity eliminarProducto(Integer id) throws IllegalArgumentException;
+    ProductoDTO guardarProducto(ProductoDTO productoDTO);
 
-    // Métodos adicionales basados en el repositorio
-    ProductoEntity buscarProductoPorCodigo(String codigo) throws IllegalArgumentException;
+    ProductoDTO actualizarProducto(Integer id, ProductoDTO productoDTO);
 
-    List<ProductoEntity> buscarProductosPorNombre(String nombre);
+    void eliminarProducto(Integer id);
 
-    List<ProductoEntity> buscarProductosPorCategoria(String categoria);
+    ProductoDTO buscarProductoPorCodigo(String codigo);
 
-    List<ProductoEntity> listarProductosActivos();
-
-    List<ProductoEntity> listarProductosConStock(Integer stockMinimo);
+    List<ProductoDTO> buscarProductosPorNombre(String nombre);
 }

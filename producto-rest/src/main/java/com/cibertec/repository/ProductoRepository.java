@@ -16,13 +16,4 @@ public interface ProductoRepository extends JpaRepository<ProductoEntity, Intege
 
     // Búsqueda por nombre (contiene)
     List<ProductoEntity> findByNombreContainingIgnoreCase(String nombre);
-
-    // Búsqueda por categoría
-    List<ProductoEntity> findByCategoria(String categoria);
-
-    // Filtrar productos activos
-    List<ProductoEntity> findByActivoTrue();
-
-    // Productos con stock disponible (mayor que cero)
-    List<ProductoEntity> findByStockGreaterThan(Integer stockMinimo);
 }

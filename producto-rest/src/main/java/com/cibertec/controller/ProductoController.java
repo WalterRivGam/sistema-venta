@@ -1,6 +1,6 @@
 package com.cibertec.controller;
 
-import com.cibertec.entity.ProductoEntity;
+import com.cibertec.dto.ProductoDTO;
 import com.cibertec.service.ProductoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,7 +17,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/productos")
+@RequestMapping("api/v1/productos")
 @RequiredArgsConstructor
 @Tag(name = "Producto", description = "API para la gestión de Productos")
 public class ProductoController {
@@ -30,15 +30,15 @@ public class ProductoController {
             @ApiResponse(responseCode = "200",
                     description = "Productos encontrados correctamente",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoEntity.class, type = "array"))),
+                            schema = @Schema(implementation = ProductoDTO.class, type = "array"))),
             @ApiResponse(responseCode = "500",
                     description = "Error interno del servidor",
                     content = @Content(schema = @Schema(implementation = List.class)))
     })
     @GetMapping
-    public ResponseEntity<List<ProductoEntity>> listarProductos() {
+    public ResponseEntity<List<ProductoDTO>> listarProductos() {
         try {
-            List<ProductoEntity> productos = productoService.listarProductos();
+            List<ProductoDTO> productos = productoService.listarProductos();
             return ResponseEntity.ok(productos);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(null);
@@ -51,7 +51,7 @@ public class ProductoController {
             @ApiResponse(responseCode = "200",
                     description = "Producto encontrado",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoEntity.class))),
+                            schema = @Schema(implementation = ProductoDTO.class))),
             @ApiResponse(responseCode = "400",
                     description = "ID no puede ser nulo o producto no existe",
                     content = @Content),
@@ -60,13 +60,13 @@ public class ProductoController {
                     content = @Content)
     })
     @GetMapping("/{id}")
-    public ResponseEntity<ProductoEntity> productoPorId(
+    public ResponseEntity<ProductoDTO> productoPorId(
             @Parameter(description = "ID del producto a buscar", required = true, example = "1")
             @PathVariable Integer id) {
         try {
-            ProductoEntity producto = productoService.buscarProductoPorId(id);
+            ProductoDTO producto = productoService.buscarProductoPorId(id);
             return ResponseEntity.ok(producto);
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
         } catch (Exception e) {
             return ResponseEntity.status(500).header("Error", "Error al obtener el producto").build();
@@ -79,7 +79,7 @@ public class ProductoController {
             @ApiResponse(responseCode = "201",
                     description = "Producto registrado correctamente",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoEntity.class))),
+                            schema = @Schema(implementation = ProductoDTO.class))),
             @ApiResponse(responseCode = "400",
                     description = "Datos del producto inválidos",
                     content = @Content),
@@ -88,16 +88,16 @@ public class ProductoController {
                     content = @Content)
     })
     @PostMapping
-    public ResponseEntity<ProductoEntity> registrarProducto(
+    public ResponseEntity<ProductoDTO> registrarProducto(
             @Parameter(description = "Datos del producto a registrar", required = true,
-                    schema = @Schema(implementation = ProductoEntity.class))
-            @RequestBody ProductoEntity productoEntity) {
+                    schema = @Schema(implementation = ProductoDTO.class))
+            @RequestBody ProductoDTO productoDTO) {
         try {
-            ProductoEntity nuevoProducto = productoService.guardarProducto(productoEntity);
+            ProductoDTO nuevoProducto = productoService.guardarProducto(productoDTO);
             return ResponseEntity.created(
                             URI.create("/api/productos/" + nuevoProducto.getId()))
                     .body(nuevoProducto);
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
         } catch (Exception e) {
             return ResponseEntity.status(500).header("Error", "Error al guardar el producto").build();
@@ -110,7 +110,7 @@ public class ProductoController {
             @ApiResponse(responseCode = "200",
                     description = "Producto actualizado correctamente",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoEntity.class))),
+                            schema = @Schema(implementation = ProductoDTO.class))),
             @ApiResponse(responseCode = "400",
                     description = "Datos del producto inválidos o ID no existe",
                     content = @Content),
@@ -119,17 +119,16 @@ public class ProductoController {
                     content = @Content)
     })
     @PutMapping("/{id}")
-    public ResponseEntity<ProductoEntity> actualizarProducto(
+    public ResponseEntity<ProductoDTO> actualizarProducto(
             @Parameter(description = "ID del producto a actualizar", required = true, example = "1")
             @PathVariable Integer id,
             @Parameter(description = "Datos actualizados del producto", required = true,
-                    schema = @Schema(implementation = ProductoEntity.class))
-            @RequestBody ProductoEntity productoEntity) {
+                    schema = @Schema(implementation = ProductoDTO.class))
+            @RequestBody ProductoDTO productoDTO) {
         try {
-            productoEntity.setId(id);
-            ProductoEntity productoActualizado = productoService.guardarProducto(productoEntity);
+            ProductoDTO productoActualizado = productoService.actualizarProducto(id, productoDTO);
             return ResponseEntity.ok(productoActualizado);
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
         } catch (Exception e) {
             return ResponseEntity.status(500).header("Error", "Error al actualizar el producto").build();
@@ -139,10 +138,9 @@ public class ProductoController {
     @Operation(summary = "Eliminar Producto",
             description = "Elimina un producto existente según su ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200",
+            @ApiResponse(responseCode = "204",
                     description = "Producto eliminado correctamente",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoEntity.class))),
+                    content = @Content),
             @ApiResponse(responseCode = "400",
                     description = "ID no existe o no se puede eliminar el producto",
                     content = @Content),
@@ -151,13 +149,13 @@ public class ProductoController {
                     content = @Content)
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<ProductoEntity> eliminarProducto(
+    public ResponseEntity<Void> eliminarProducto(
             @Parameter(description = "ID del producto a eliminar", required = true, example = "1")
             @PathVariable Integer id) {
         try {
-            ProductoEntity producto = productoService.eliminarProducto(id);
-            return ResponseEntity.ok(producto);
-        } catch (IllegalArgumentException e) {
+            productoService.eliminarProducto(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
         } catch (Exception e) {
             return ResponseEntity.status(500).header("Error", "Error al eliminar el producto").build();
@@ -170,7 +168,7 @@ public class ProductoController {
             @ApiResponse(responseCode = "200",
                     description = "Producto encontrado",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoEntity.class))),
+                            schema = @Schema(implementation = ProductoDTO.class))),
             @ApiResponse(responseCode = "400",
                     description = "Código no puede ser nulo o producto no existe",
                     content = @Content),
@@ -179,13 +177,13 @@ public class ProductoController {
                     content = @Content)
     })
     @GetMapping("/by-codigo/{codigo}")
-    public ResponseEntity<ProductoEntity> buscarPorCodigo(
+    public ResponseEntity<ProductoDTO> buscarPorCodigo(
             @Parameter(description = "Código único del producto", required = true, example = "PROD001")
             @PathVariable String codigo) {
         try {
-            ProductoEntity producto = productoService.buscarProductoPorCodigo(codigo);
+            ProductoDTO producto = productoService.buscarProductoPorCodigo(codigo);
             return ResponseEntity.ok(producto);
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
         } catch (Exception e) {
             return ResponseEntity.status(500).header("Error", "Error al obtener el producto").build();
@@ -198,7 +196,7 @@ public class ProductoController {
             @ApiResponse(responseCode = "200",
                     description = "Búsqueda completada",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoEntity.class, type = "array"))),
+                            schema = @Schema(implementation = ProductoDTO.class, type = "array"))),
             @ApiResponse(responseCode = "400",
                     description = "Término de búsqueda inválido",
                     content = @Content),
@@ -207,86 +205,14 @@ public class ProductoController {
                     content = @Content)
     })
     @GetMapping("/search")
-    public ResponseEntity<List<ProductoEntity>> buscarPorNombre(
+    public ResponseEntity<List<ProductoDTO>> buscarPorNombre(
             @Parameter(description = "Término a buscar en el nombre del producto", required = true, example = "Samsung")
             @RequestParam String nombre) {
         try {
-            List<ProductoEntity> productos = productoService.buscarProductosPorNombre(nombre);
+            List<ProductoDTO> productos = productoService.buscarProductosPorNombre(nombre);
             return ResponseEntity.ok(productos);
-        } catch (IllegalArgumentException e) {
+        } catch (RuntimeException e) {
             return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
-    }
-
-    @Operation(summary = "Listar productos por categoría",
-            description = "Obtiene una lista de productos de una categoría específica")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200",
-                    description = "Productos encontrados",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoEntity.class, type = "array"))),
-            @ApiResponse(responseCode = "400",
-                    description = "Categoría inválida",
-                    content = @Content),
-            @ApiResponse(responseCode = "500",
-                    description = "Error interno del servidor",
-                    content = @Content)
-    })
-    @GetMapping("/by-categoria/{categoria}")
-    public ResponseEntity<List<ProductoEntity>> listarPorCategoria(
-            @Parameter(description = "Categoría de productos", required = true, example = "Electrónica")
-            @PathVariable String categoria) {
-        try {
-            List<ProductoEntity> productos = productoService.buscarProductosPorCategoria(categoria);
-            return ResponseEntity.ok(productos);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().header("Error", e.getMessage()).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
-    }
-
-    @Operation(summary = "Listar productos activos",
-            description = "Obtiene una lista de todos los productos activos en el sistema")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200",
-                    description = "Productos activos encontrados",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoEntity.class, type = "array"))),
-            @ApiResponse(responseCode = "500",
-                    description = "Error interno del servidor",
-                    content = @Content)
-    })
-    @GetMapping("/activos")
-    public ResponseEntity<List<ProductoEntity>> listarProductosActivos() {
-        try {
-            List<ProductoEntity> productos = productoService.listarProductosActivos();
-            return ResponseEntity.ok(productos);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
-    }
-
-    @Operation(summary = "Listar productos con stock disponible",
-            description = "Obtiene una lista de productos que tienen al menos la cantidad mínima especificada de stock")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200",
-                    description = "Productos con stock encontrados",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductoEntity.class, type = "array"))),
-            @ApiResponse(responseCode = "500",
-                    description = "Error interno del servidor",
-                    content = @Content)
-    })
-    @GetMapping("/with-stock")
-    public ResponseEntity<List<ProductoEntity>> listarProductosConStock(
-            @Parameter(description = "Stock mínimo requerido", example = "10")
-            @RequestParam(defaultValue = "0") Integer stockMinimo) {
-        try {
-            List<ProductoEntity> productos = productoService.listarProductosConStock(stockMinimo);
-            return ResponseEntity.ok(productos);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(null);
         }

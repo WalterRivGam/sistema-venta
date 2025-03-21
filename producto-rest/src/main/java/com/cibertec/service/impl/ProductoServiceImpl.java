@@ -1,10 +1,13 @@
 package com.cibertec.service.impl;
 
+import com.cibertec.dto.ProductoDTO;
 import com.cibertec.entity.ProductoEntity;
+import com.cibertec.mapper.ProductoMapper;
 import com.cibertec.repository.ProductoRepository;
 import com.cibertec.service.ProductoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,93 +19,72 @@ import java.util.List;
 public class ProductoServiceImpl implements ProductoService {
 
     private final ProductoRepository productoRepository;
+    private final ProductoMapper productoMapper;
+
+    /* NO uses Mappers.getMapper - Usa inyección de dependencias
+    private ProductoMapper productoMapper = Mappers.getMapper(ProductoMapper.class);
+    */
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductoEntity> listarProductos() {
-        log.debug("Listando todos los productos");
-        return productoRepository.findAll();
+    public List<ProductoDTO> listarProductos() {
+        List<ProductoEntity> productos = productoRepository.findAll();
+        return productoMapper.convertirEntityADTO(productos);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ProductoEntity buscarProductoPorId(Integer id) {
-        log.debug("Buscando producto con id {}", id);
-        if (id == null) {
-            throw new IllegalArgumentException("El id del producto no puede ser nulo");
-        }
-        return productoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("El producto no existe"));
-    }
-
-    @Override
-    @Transactional
-    public ProductoEntity guardarProducto(ProductoEntity productoEntity) {
-        log.debug("Guardando producto con id {}", productoEntity.getId());
-        if (productoEntity == null) {
-            throw new IllegalArgumentException("El producto no puede ser nulo");
-        }
-        return productoRepository.save(productoEntity);
-    }
-
-    @Override
-    @Transactional
-    public ProductoEntity eliminarProducto(Integer id) {
-        log.debug("Eliminando producto con id {}", id);
-        if (id == null) {
-            throw new IllegalArgumentException("El ID no puede ser nulo");
-        }
+    public ProductoDTO buscarProductoPorId(Integer id) {
         ProductoEntity producto = productoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+        return productoMapper.convertirEntityADTO(producto);
+    }
+
+    @Override
+    @Transactional
+    public ProductoDTO guardarProducto(ProductoDTO productoDTO) {
+        ProductoEntity producto = productoMapper.convertirDTOAEntity(productoDTO);
+        ProductoEntity guardado = productoRepository.save(producto);
+        return productoMapper.convertirEntityADTO(guardado);
+    }
+
+    @Override
+    @Transactional
+    public ProductoDTO actualizarProducto(Integer id, ProductoDTO productoDTO) {
+        // Verificar si existe
+        productoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        // Asegurar que el ID sea el correcto
+        productoDTO.setId(id);
+
+        ProductoEntity producto = productoMapper.convertirDTOAEntity(productoDTO);
+        ProductoEntity actualizado = productoRepository.save(producto);
+        return productoMapper.convertirEntityADTO(actualizado);
+    }
+
+    @Override
+    @Transactional
+    public void eliminarProducto(Integer id) {
+        // Verificar si existe
+        productoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
         productoRepository.deleteById(id);
-        return producto;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ProductoEntity buscarProductoPorCodigo(String codigo) throws IllegalArgumentException {
-        log.debug("Buscando producto con código {}", codigo);
-        if (codigo == null || codigo.trim().isEmpty()) {
-            throw new IllegalArgumentException("El código del producto no puede ser nulo o vacío");
-        }
-        return productoRepository.findByCodigo(codigo)
-                .orElseThrow(() -> new IllegalArgumentException("Producto con código " + codigo + " no encontrado"));
+    public ProductoDTO buscarProductoPorCodigo(String codigo) {
+        ProductoEntity producto = productoRepository.findByCodigo(codigo)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+        return productoMapper.convertirEntityADTO(producto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductoEntity> buscarProductosPorNombre(String nombre) {
-        log.debug("Buscando productos que contengan '{}' en su nombre", nombre);
-        if (nombre == null || nombre.trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre para la búsqueda no puede ser nulo o vacío");
-        }
-        return productoRepository.findByNombreContainingIgnoreCase(nombre);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductoEntity> buscarProductosPorCategoria(String categoria) {
-        log.debug("Buscando productos de la categoría {}", categoria);
-        if (categoria == null || categoria.trim().isEmpty()) {
-            throw new IllegalArgumentException("La categoría no puede ser nula o vacía");
-        }
-        return productoRepository.findByCategoria(categoria);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductoEntity> listarProductosActivos() {
-        log.debug("Listando todos los productos activos");
-        return productoRepository.findByActivoTrue();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductoEntity> listarProductosConStock(Integer stockMinimo) {
-        log.debug("Listando productos con stock mayor a {}", stockMinimo);
-        if (stockMinimo == null) {
-            stockMinimo = 0; // Valor por defecto si es nulo
-        }
-        return productoRepository.findByStockGreaterThan(stockMinimo);
+    public List<ProductoDTO> buscarProductosPorNombre(String nombre) {
+        List<ProductoEntity> productos = productoRepository.findByNombreContainingIgnoreCase(nombre);
+        return productoMapper.convertirEntityADTO(productos);
     }
 }
